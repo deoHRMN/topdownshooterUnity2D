@@ -32,7 +32,6 @@ public class PlayerPowerUp : MonoBehaviour
 
     void Awake()
     {
-        // Initialize components
         playerShoot = GetComponent<PlayerShoot>();
         player2Shoot = GetComponent<Player2Shoot>();
         playerMovement = GetComponent<PlayerMovement>();
@@ -40,7 +39,6 @@ public class PlayerPowerUp : MonoBehaviour
         healthController = GetComponent<HealthController>();
         rb = GetComponent<Rigidbody2D>();
 
-        // Get the PlayerInput component and find the PowerUp action
         var playerInput = GetComponent<PlayerInput>();
         if (playerInput == null)
         {
@@ -54,6 +52,8 @@ public class PlayerPowerUp : MonoBehaviour
             Debug.LogError("PowerUp action not found in PlayerInputActions");
             return;
         }
+
+        Debug.Log("PlayerPowerUp initialized for " + gameObject.name);
 
         // Initialize cooldowns to make abilities available immediately at start
         lastPowerShotTime = Time.time - powerShotCooldown;
@@ -70,7 +70,6 @@ public class PlayerPowerUp : MonoBehaviour
 
     void OnEnable()
     {
-        // Enable the PowerUp action when the object is enabled
         if (powerUpAction != null)
         {
             powerUpAction.performed += OnPowerUpPerformed;
@@ -81,7 +80,6 @@ public class PlayerPowerUp : MonoBehaviour
 
     void OnDisable()
     {
-        // Disable the PowerUp action when the object is disabled
         if (powerUpAction != null)
         {
             powerUpAction.performed -= OnPowerUpPerformed;
@@ -92,7 +90,6 @@ public class PlayerPowerUp : MonoBehaviour
 
     void Update()
     {
-        // Update the power-up bar UI element
         UpdatePowerUpBar();
     }
 
@@ -103,7 +100,6 @@ public class PlayerPowerUp : MonoBehaviour
         {
             case PowerUpType.PowerShot:
                 Debug.Log($"Checking PowerShot cooldown: {Time.time - lastPowerShotTime} >= {powerShotCooldown}");
-                // Check if PowerShot cooldown has elapsed
                 if (Time.time - lastPowerShotTime >= powerShotCooldown)
                 {
                     if (playerShoot != null)
@@ -130,7 +126,6 @@ public class PlayerPowerUp : MonoBehaviour
 
             case PowerUpType.Dash:
                 Debug.Log($"Checking Dash cooldown: {Time.time - lastDashTime} >= {dashCooldown}");
-                // Check if Dash cooldown has elapsed
                 if (Time.time - lastDashTime >= dashCooldown)
                 {
                     StartCoroutine(Dash());
@@ -144,7 +139,6 @@ public class PlayerPowerUp : MonoBehaviour
 
             case PowerUpType.Heal:
                 Debug.Log($"Checking Heal cooldown: {Time.time - lastHealingTime} >= {healingCooldown}");
-                // Check if Heal cooldown has elapsed
                 if (Time.time - lastHealingTime >= healingCooldown)
                 {
                     Heal();
@@ -161,20 +155,21 @@ public class PlayerPowerUp : MonoBehaviour
     private IEnumerator Dash()
     {
         Debug.Log("Dash effect started for " + gameObject.name);
-        // Apply Dash effect by increasing speed
         if (playerMovement != null)
         {
             playerMovement.currentSpeed *= dashSpeedMultiplier;
             yield return new WaitForSeconds(dashDuration);
             playerMovement.currentSpeed /= dashSpeedMultiplier;
             Debug.Log("Dash effect ended for " + gameObject.name);
+            lastDashTime = Time.time; // Set the cooldown start time
         }
         else if (player2Movement != null)
         {
             player2Movement.currentSpeed *= dashSpeedMultiplier;
             yield return new WaitForSeconds(dashDuration);
-            player2Movement.currentSpeed /= dashSpeedMultiplier;
+            player2Movement.currentSpeed /= dashSpeedMultiplier; // Corrected line
             Debug.Log("Dash effect ended for " + gameObject.name);
+            lastDashTime = Time.time; // Set the cooldown start time
         }
         else
         {
@@ -185,10 +180,10 @@ public class PlayerPowerUp : MonoBehaviour
     private void Heal()
     {
         Debug.Log("Heal effect applied for " + gameObject.name);
-        // Heal the player by a fixed amount
         if (healthController != null)
         {
             healthController.Heal(2); // Heal 2 HP
+            lastHealingTime = Time.time; // Set the cooldown start time
         }
         else
         {
@@ -196,7 +191,12 @@ public class PlayerPowerUp : MonoBehaviour
         }
     }
 
-    // Update the power-up bar UI to reflect cooldown status
+    public void OnPowerShotFired()
+    {
+        Debug.Log("PowerShot fired for " + gameObject.name);
+        lastPowerShotTime = Time.time;
+    }
+
     private void UpdatePowerUpBar()
     {
         if (powerUpBar != null)
@@ -215,17 +215,25 @@ public class PlayerPowerUp : MonoBehaviour
                     break;
             }
 
-            // Calculate fill amount based on cooldown progress
             float elapsed = Time.time - GetLastUsedTime();
-            float fillAmount = elapsed < cooldownTime ? elapsed / cooldownTime : 1;
+            float fillAmount;
 
-            // Update the power-up bar scale and position
+            if (elapsed < cooldownTime)
+            {
+                // Cooling down, bar filling up
+                fillAmount = elapsed / cooldownTime;
+            }
+            else
+            {
+                // Ready to use, bar full
+                fillAmount = 1;
+            }
+
             powerUpBar.transform.localScale = new Vector3(fillAmount * originalScale.x, originalScale.y, originalScale.z);
             powerUpBar.transform.localPosition = new Vector3(originalPosition.x - (originalScale.x - powerUpBar.transform.localScale.x) / 2, originalPosition.y, originalPosition.z);
         }
     }
 
-    // Get the last used time of the current power-up type
     private float GetLastUsedTime()
     {
         switch (powerUpType)
