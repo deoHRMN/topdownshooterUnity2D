@@ -3,13 +3,14 @@ using UnityEngine.InputSystem;
 
 public class Player2Movement : MonoBehaviour
 {
-    private int normalSpeed = 4;
-    private int slowedSpeed = 2;
+    public int normalSpeed = 4;
+    public int slowedSpeed = 2;
     public int currentSpeed;
     private Vector2 movement;
     private Vector2 lastNonZeroMovement;
     private Rigidbody2D rb;
     private SpriteRenderer spriteRenderer;
+    public bool isInWater; // Track if the player is in water
 
     private void Awake()
     {
@@ -82,6 +83,7 @@ public class Player2Movement : MonoBehaviour
         if (other.CompareTag("Water"))
         {
             currentSpeed = slowedSpeed;
+            isInWater = true;
         }
     }
 
@@ -91,6 +93,7 @@ public class Player2Movement : MonoBehaviour
         if (other.CompareTag("Water"))
         {
             currentSpeed = normalSpeed;
+            isInWater = false;
         }
     }
 

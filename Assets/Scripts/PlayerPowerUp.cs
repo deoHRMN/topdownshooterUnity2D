@@ -151,23 +151,33 @@ public class PlayerPowerUp : MonoBehaviour
                 break;
         }
     }
-
     private IEnumerator Dash()
     {
         Debug.Log("Dash effect started for " + gameObject.name);
+
+        // Store the initial speed based on the current speed
+        int initialSpeed = playerMovement != null ? playerMovement.currentSpeed : player2Movement.currentSpeed;
+
+        // Apply dash effect
         if (playerMovement != null)
         {
-            playerMovement.currentSpeed *= dashSpeedMultiplier;
+            playerMovement.currentSpeed = initialSpeed * dashSpeedMultiplier;
             yield return new WaitForSeconds(dashDuration);
-            playerMovement.currentSpeed /= dashSpeedMultiplier;
+
+            // Reset speed based on whether the player is in water or not
+            playerMovement.currentSpeed = playerMovement.isInWater ? playerMovement.slowedSpeed : playerMovement.normalSpeed;
+
             Debug.Log("Dash effect ended for " + gameObject.name);
             lastDashTime = Time.time; // Set the cooldown start time
         }
         else if (player2Movement != null)
         {
-            player2Movement.currentSpeed *= dashSpeedMultiplier;
+            player2Movement.currentSpeed = initialSpeed * dashSpeedMultiplier;
             yield return new WaitForSeconds(dashDuration);
-            player2Movement.currentSpeed /= dashSpeedMultiplier; // Corrected line
+
+            // Reset speed based on whether the player is in water or not
+            player2Movement.currentSpeed = player2Movement.isInWater ? player2Movement.slowedSpeed : player2Movement.normalSpeed;
+
             Debug.Log("Dash effect ended for " + gameObject.name);
             lastDashTime = Time.time; // Set the cooldown start time
         }
@@ -176,6 +186,8 @@ public class PlayerPowerUp : MonoBehaviour
             Debug.LogError("PlayerMovement component is null for both players");
         }
     }
+
+
 
     private void Heal()
     {
